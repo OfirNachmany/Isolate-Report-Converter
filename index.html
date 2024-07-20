@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!-- Google AdSense script -->
+    <script data-ad-client="ca-pub-XXXXXXXXXX" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> <!-- Replace ca-pub-XXXXXXXXXX with your AdSense Publisher ID -->
 </head>
 <body>
     <div class="container mt-5">
@@ -36,68 +38,7 @@
                 </div>
                 <select id="date-column" class="form-control mt-3">
                     <option value="20" selected>Column U (default)</option>
-                    <option value="0">Column A</option>
-                    <option value="1">Column B</option>
-                    <option value="2">Column C</option>
-                    <option value="3">Column D</option>
-                    <option value="4">Column E</option>
-                    <option value="5">Column F</option>
-                    <option value="6">Column G</option>
-                    <option value="7">Column H</option>
-                    <option value="8">Column I</option>
-                    <option value="9">Column J</option>
-                    <option value="10">Column K</option>
-                    <option value="11">Column L</option>
-                    <option value="12">Column M</option>
-                    <option value="13">Column N</option>
-                    <option value="14">Column O</option>
-                    <option value="15">Column P</option>
-                    <option value="16">Column Q</option>
-                    <option value="17">Column R</option>
-                    <option value="18">Column S</option>
-                    <option value="19">Column T</option>
-                    <option value="20">Column U</option>
-                    <option value="21">Column V</option>
-                    <option value="22">Column W</option>
-                    <option value="23">Column X</option>
-                    <option value="24">Column Y</option>
-                    <option value="25">Column Z</option>
-                    <option value="26">Column AA</option>
-                    <option value="27">Column AB</option>
-                    <option value="28">Column AC</option>
-                    <option value="29">Column AD</option>
-                    <option value="30">Column AE</option>
-                    <option value="31">Column AF</option>
-                    <option value="32">Column AG</option>
-                    <option value="33">Column AH</option>
-                    <option value="34">Column AI</option>
-                    <option value="35">Column AJ</option>
-                    <option value="36">Column AK</option>
-                    <option value="37">Column AL</option>
-                    <option value="38">Column AM</option>
-                    <option value="39">Column AN</option>
-                    <option value="40">Column AO</option>
-                    <option value="41">Column AP</option>
-                    <option value="42">Column AQ</option>
-                    <option value="43">Column AR</option>
-                    <option value="44">Column AS</option>
-                    <option value="45">Column AT</option>
-                    <option value="46">Column AU</option>
-                    <option value="47">Column AV</option>
-                    <option value="48">Column AW</option>
-                    <option value="49">Column AX</option>
-                    <option value="50">Column AY</option>
-                    <option value="51">Column AZ</option>
-                    <option value="52">Column BA</option>
-                    <option value="53">Column BB</option>
-                    <option value="54">Column BC</option>
-                    <option value="55">Column BD</option>
-                    <option value="56">Column BE</option>
-                    <option value="57">Column BF</option>
-                    <option value="58">Column BG</option>
-                    <option value="59">Column BH</option>
-                    <option value="60">Column BI</option>
-                    <option value="61">Column BJ</option>
+                    ${Array.from({ length: 62 }, (_, i) => `<option value="${i}">${String.fromCharCode(65 + i % 26) + (i >= 26 ? String.fromCharCode(65 + Math.floor(i / 26) - 1) : '')}</option>`).join('')}
                 </select>
                 <button class="btn btn-custom mt-3" onclick="convertTime()">Convert Time</button>
                 <div class="progress mt-3 d-none" id="progress-bar">
@@ -115,6 +56,31 @@
             <p>&copy; Ofir Nachmany</p>
         </footer>
     </div>
+    <!-- Responsive Ad Unit -->
+                 <!-- left side -->
+                 <div class="mt-3">
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="${process.env.ADSENSE_CLIENT_ID}"
+                         data-ad-slot="${process.env.ADSENSE_SLOT_ID_LEFT}"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
+                <!-- right side -->
+                <div class="mt-3">
+                    <ins class="adsbygoogle"
+                        style="display:block"
+                        data-ad-client="${process.env.ADSENSE_CLIENT_ID}"
+                        data-ad-slot="${process.env.ADSENSE_SLOT_ID_LEFT}"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <script src="script.js"></script>
