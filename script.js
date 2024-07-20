@@ -1,15 +1,39 @@
 document.getElementById('upload').addEventListener('change', handleFile, false);
+document.getElementById('drop-zone').addEventListener('click', () => document.getElementById('upload').click());
+document.getElementById('drop-zone').addEventListener('dragover', (e) => {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.add('dragover');
+});
+document.getElementById('drop-zone').addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('dragover');
+});
+document.getElementById('drop-zone').addEventListener('drop', handleDrop, false);
+
 let workbook;
 
 function handleFile(e) {
     const files = e.target.files;
+    processFile(files[0]);
+    showFilePreview(files[0]);
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    processFile(files[0]);
+    showFilePreview(files[0]);
+}
+
+function processFile(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
         const data = new Uint8Array(e.target.result);
         workbook = XLSX.read(data, { type: 'array' });
         showFeedback('File uploaded successfully. Ready to convert.', 'success');
     };
-    reader.readAsArrayBuffer(files[0]);
+    reader.readAsArrayBuffer(file);
 }
 
 function showFeedback(message, type) {
@@ -17,6 +41,44 @@ function showFeedback(message, type) {
     feedback.className = `alert alert-${type}`;
     feedback.textContent = message;
     feedback.classList.remove('d-none');
+}
+
+function showProgressBar() {
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.classList.remove('d-none');
+}
+
+function updateProgressBar(percent) {
+    const progressBarInner = document.getElementById('progress-bar-inner');
+    progressBarInner.style.width = `${percent}%`;
+}
+
+function showLoadingSpinner() {
+    const spinner = document.getElementById('loading-spinner');
+    spinner.classList.remove('d-none');
+}
+
+function hideLoadingSpinner() {
+    const spinner = document.getElementById('loading-spinner');
+    spinner.classList.add('d-none');
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+}
+
+function showFilePreview(file) {
+    const previewArea = document.getElementById('drop-zone');
+    const fileDetails = `
+        <p><strong>File name:</strong> ${file.name}</p>
+        <p><strong>File size:</strong> ${(file.size / 1024).toFixed(2)} KB</p>
+    `;
+    previewArea.innerHTML = `
+        <div class="drop-zone-inner">
+            <i class="fas fa-file-excel fa-3x"></i>
+            ${fileDetails}
+        </div>
+    `;
 }
 
 // Function to convert Excel date serial number to JavaScript Date object
@@ -29,7 +91,7 @@ function convertExcelDate(excelDate) {
 function formatDateToIsraeli(date) {
     const day = String(date.getDate()).padStart(2, '0') - 1;
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const year = String(date.getFullYear()).slice(-2); // Last two digits of the year
+    const year = String(date.getFullYear()).slice(-4); // Full year
     return `${day}/${month}/${year}`;
 }
 
@@ -41,41 +103,59 @@ function formatTimeToIsraeli(date) {
     return `${hours}:${minutes}:${seconds}`;
 }
 
+function replaceDateWithTime(header) {
+    return header.replace(/Date/gi, 'Time');
+}
+
+function isExcelDate(value) {
+    return typeof value === 'number' && value > 25567; // Basic check to identify if a number might be an Excel date
+}
+
 function convertTime() {
+    if (!workbook) {
+        showFeedback('Please upload a file first.', 'warning');
+        return;
+    }
+
+    showProgressBar();
+    showLoadingSpinner();
+    let progress = 0;
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    const timeColumnIndex = 20; // Column U (zero-indexed)
-
-    // Handle header row
+    // Identify all columns with "Date" in the header
+    const dateColumns = [];
     const headerRow = rows[0];
-    headerRow.splice(timeColumnIndex + 1, 0, 'Review Time');
-    for (let col = headerRow.length - 2; col > timeColumnIndex + 1; col--) {
-        headerRow[col + 1] = headerRow[col];
-    }
-    headerRow[timeColumnIndex + 1] = 'Review Time';
-
-    rows.forEach((row, index) => {
-        if (index > 0) { // Skip header row
-            const excelTime = row[timeColumnIndex];
-            if (typeof excelTime === 'number') { // Check if the cell contains a number (Excel date serial)
-                const date = convertExcelDate(excelTime);
-                const israeliDate = formatDateToIsraeli(date);
-                const israeliTime = formatTimeToIsraeli(date);
-
-                // Shift all columns to the right from timeColumnIndex + 1 onwards
-                for (let col = row.length - 1; col >= timeColumnIndex + 1; col--) {
-                    row[col + 1] = row[col];
-                }
-
-                row[timeColumnIndex] = israeliDate; // Place the date in column 20
-                row[timeColumnIndex + 1] = israeliTime; // Place the time in column 21
-            } else {
-                row[timeColumnIndex] = 'Invalid Date';
-                row[timeColumnIndex + 1] = 'Invalid Time';
-            }
+    headerRow.forEach((header, index) => {
+        if (header.toLowerCase().includes('date')) {
+            dateColumns.push(index);
         }
+    });
+
+    // Insert new headers for time columns and adjust data rows
+    dateColumns.forEach(colIndex => {
+        const newHeader = replaceDateWithTime(headerRow[colIndex]);
+        headerRow.splice(colIndex + 1, 0, newHeader);
+
+        // Adjust each row for the new time column
+        rows.forEach((row, rowIndex) => {
+            if (rowIndex > 0) { // Skip header row
+                const excelTime = row[colIndex];
+                if (isExcelDate(excelTime)) { // Check if the cell contains a valid Excel date
+                    const date = convertExcelDate(excelTime);
+                    const israeliDate = formatDateToIsraeli(date);
+                    const israeliTime = formatTimeToIsraeli(date);
+
+                    // Insert the time value next to the date value
+                    row.splice(colIndex + 1, 0, israeliTime);
+                    row[colIndex] = israeliDate; // Place the date in the selected column
+                } else {
+                    // Ensure empty string in the new column if no date is present
+                    row.splice(colIndex + 1, 0, '');
+                }
+            }
+        });
     });
 
     const newWorksheet = XLSX.utils.aoa_to_sheet(rows);
@@ -83,4 +163,7 @@ function convertTime() {
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
 
     XLSX.writeFile(newWorkbook, 'converted_times.xlsx');
+    showFeedback('Time conversion completed. The file is ready for download.', 'success');
+    updateProgressBar(100); // Ensure the progress bar reaches 100%
+    hideLoadingSpinner();
 }
