@@ -250,3 +250,4 @@ input:checked + .slider .moon {
   opacity: 1;
   transform: translateX(0); /* Move to the active position */
 }
+
