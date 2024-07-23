@@ -104,12 +104,13 @@ function formatTimeToIsraeli(date) {
 }
 
 function replaceDateWithTime(header) {
-    return header.replace(/Date/gi, 'Time');
+    return header.replace(/Date$/gi, 'Time');
 }
 
 function isExcelDate(value) {
-    return typeof value === 'number' && value > 25567; // Basic check to identify if a number might be an Excel date
+    return typeof value === 'number' && value > 25567 && value < 2958465; // Valid Excel date range
 }
+
 
 function convertTime() {
     if (!workbook) {
@@ -124,9 +125,11 @@ function convertTime() {
     const worksheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
+    // Identify columns
+    const headerRow = rows[0];
+
     // Identify all columns with "Date" in the header
     const dateColumns = [];
-    const headerRow = rows[0];
     headerRow.forEach((header, index) => {
         if (header.toLowerCase().includes('date')) {
             dateColumns.push(index);
@@ -134,31 +137,42 @@ function convertTime() {
     });
 
     // Insert new headers for time columns and adjust data rows
+    let offset = 0;
     dateColumns.forEach(colIndex => {
-        const newHeader = replaceDateWithTime(headerRow[colIndex]);
-        headerRow.splice(colIndex + 1, 0, newHeader);
+        const adjustedColIndex = colIndex + offset;
+        const newHeader = replaceDateWithTime(headerRow[adjustedColIndex]);
+        headerRow.splice(adjustedColIndex + 1, 0, newHeader);
+        offset++;
 
         // Adjust each row for the new time column
         rows.forEach((row, rowIndex) => {
             if (rowIndex > 0) { // Skip header row
-                const excelTime = row[colIndex];
+                const excelTime = row[adjustedColIndex];
                 if (isExcelDate(excelTime)) { // Check if the cell contains a valid Excel date
                     const date = convertExcelDate(excelTime);
                     const israeliDate = formatDateToIsraeli(date);
                     const israeliTime = formatTimeToIsraeli(date);
 
                     // Insert the time value next to the date value
-                    row.splice(colIndex + 1, 0, israeliTime);
-                    row[colIndex] = israeliDate; // Place the date in the selected column
+                    row.splice(adjustedColIndex + 1, 0, israeliTime);
+                    row[adjustedColIndex] = israeliDate; // Place the date in the selected column
                 } else {
                     // Ensure empty string in the new column if no date is present
-                    row.splice(colIndex + 1, 0, '');
+                    row.splice(adjustedColIndex + 1, 0, '');
                 }
             }
         });
     });
 
-    const newWorksheet = XLSX.utils.aoa_to_sheet(rows);
+    // Ensure all rows have the correct number of columns
+    const maxColumns = Math.max(...rows.map(row => row.length));
+    rows.forEach(row => {
+        while (row.length < maxColumns) {
+            row.push('');
+        }
+    });
+
+    const newWorksheet = XLSX.utils.aoa_to_sheet(processedRows);
     const newWorkbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
 
