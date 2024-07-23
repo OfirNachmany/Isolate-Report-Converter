@@ -111,7 +111,6 @@ function isExcelDate(value) {
     return typeof value === 'number' && value > 25567 && value < 2958465; // Valid Excel date range
 }
 
-
 function convertTime() {
     if (!workbook) {
         showFeedback('Please upload a file first.', 'warning');
@@ -125,11 +124,9 @@ function convertTime() {
     const worksheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    // Identify columns
-    const headerRow = rows[0];
-
     // Identify all columns with "Date" in the header
     const dateColumns = [];
+    const headerRow = rows[0];
     headerRow.forEach((header, index) => {
         if (header.toLowerCase().includes('date')) {
             dateColumns.push(index);
@@ -172,6 +169,7 @@ function convertTime() {
         }
     });
 
+    const newWorksheet = XLSX.utils.aoa_to_sheet(rows);
     const newWorkbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
 
