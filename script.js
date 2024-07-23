@@ -172,7 +172,6 @@ function convertTime() {
         }
     });
 
-    const newWorksheet = XLSX.utils.aoa_to_sheet(processedRows);
     const newWorkbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
 
