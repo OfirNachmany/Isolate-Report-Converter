@@ -97,7 +97,7 @@ function formatDateToIsraeli(date) {
 
 // Function to format time to Israeli format
 function formatTimeToIsraeli(date) {
-    const hours = String(date.getHours()).padStart(2, '0') - 3;
+    const hours = String(date.getHours()).padStart(2, '0') - 2;
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
     return `${hours}:${minutes}:${seconds}`;
